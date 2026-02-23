@@ -10,6 +10,7 @@ export default function RootLayout() {
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="gate" />
+        <Stack.Screen name="chat/[match_id]" />
       </Stack>
     </SessionProvider>
   );
