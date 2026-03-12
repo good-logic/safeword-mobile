@@ -7,6 +7,9 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  KeyboardAvoidingView,
+  ScrollView,
+  Keyboard,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
@@ -45,7 +48,6 @@ export default function ProfileScreen() {
   const [experienceLevel, setExperienceLevel] = useState<string | null>(null);
   const [ageMin, setAgeMin] = useState("18");
   const [ageMax, setAgeMax] = useState("60");
-
   const [loading, setLoading] = useState(false);
 
   const bioTooLong = bio.length > 300;
@@ -102,109 +104,135 @@ export default function ProfileScreen() {
   }
 
   return (
-    <View style={{ flex: 1, padding: 24 }}>
-      <Text style={{ fontSize: 28, marginBottom: 16 }}>Profile</Text>
-
-      {/* Display Name */}
-      <TextInput
-        placeholder="Display Name"
-        value={displayName}
-        onChangeText={setDisplayName}
-        style={{ borderWidth: 1, padding: 12, marginBottom: 12 }}
-      />
-
-      {/* DOB Picker */}
-      <Pressable
-        onPress={() => setShowPicker(true)}
-        style={{ borderWidth: 1, padding: 12, marginBottom: 12 }}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+    >
+      <ScrollView
+        contentContainerStyle={{ padding: 24, paddingBottom: 60 }}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text>
-          {dob ? formatDate(dob) : "Select Date of Birth"}
-        </Text>
-      </Pressable>
+        <Text style={{ fontSize: 28, marginBottom: 16 }}>Profile</Text>
 
-      {showPicker && (
-        <DateTimePicker
-          value={dob ?? new Date(2000, 0, 1)}
-          mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          maximumDate={new Date()}
-          onChange={(_, selectedDate) => {
-            setShowPicker(false);
-            if (selectedDate) setDob(selectedDate);
+        {/* Display Name */}
+        <TextInput
+          placeholder="Display Name"
+          value={displayName}
+          onChangeText={setDisplayName}
+          style={{ borderWidth: 1, padding: 12, marginBottom: 12 }}
+        />
+
+        {/* DOB Picker */}
+        <Pressable
+          onPress={() => {
+            Keyboard.dismiss();
+            setShowPicker(true);
+          }}
+          style={{ borderWidth: 1, padding: 12, marginBottom: 12 }}
+        >
+          <Text>
+            {dob ? formatDate(dob) : "Select Date of Birth"}
+          </Text>
+        </Pressable>
+
+        {showPicker && (
+          <DateTimePicker
+            value={dob ?? new Date(2000, 0, 1)}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            maximumDate={new Date()}
+            onChange={(_, selectedDate) => {
+              setShowPicker(false);
+              if (selectedDate) setDob(selectedDate);
+            }}
+          />
+        )}
+
+        {/* Pronouns */}
+        <TextInput
+          placeholder="Pronouns (optional)"
+          value={pronouns}
+          onChangeText={setPronouns}
+          style={{ borderWidth: 1, padding: 12, marginBottom: 12 }}
+        />
+
+        {/* Bio */}
+        <TextInput
+          placeholder="Bio (max 300 characters)"
+          value={bio}
+          onChangeText={(text) => {
+            if (text.length <= 300) setBio(text);
+          }}
+          multiline
+          style={{
+            borderWidth: 1,
+            padding: 12,
+            marginBottom: 4,
+            height: 100,
           }}
         />
-      )}
+        <Text style={{ marginBottom: 12 }}>
+          {bioCount} / 300
+        </Text>
 
-      {/* Pronouns */}
-      <TextInput
-        placeholder="Pronouns (optional)"
-        value={pronouns}
-        onChangeText={setPronouns}
-        style={{ borderWidth: 1, padding: 12, marginBottom: 12 }}
-      />
+        {/* Experience Level */}
+        <Text style={{ marginBottom: 6 }}>Experience Level</Text>
+        {EXPERIENCE_OPTIONS.map((opt) => {
+          const selected = experienceLevel === opt.value;
 
-      {/* Bio with counter */}
-      <TextInput
-        placeholder="Bio (max 300 characters)"
-        value={bio}
-        onChangeText={(text) => {
-          if (text.length <= 300) setBio(text);
-        }}
-        multiline
-        style={{
-          borderWidth: 1,
-          padding: 12,
-          marginBottom: 4,
-          height: 100,
-        }}
-      />
-      <Text style={{ marginBottom: 12 }}>
-        {bioCount} / 300
-      </Text>
+          return (
+            <Pressable
+              key={opt.value}
+              onPress={() => {
+                Keyboard.dismiss(); // optional quality fix
+                setExperienceLevel(opt.value);
+              }}
+              style={{
+                padding: 12,
+                borderWidth: 1,
+                marginBottom: 8,
+                backgroundColor: selected ? "#111" : "#fff",
+              }}
+            >
+              <Text style={{ color: selected ? "#fff" : "#111" }}>
+                {opt.label}
+              </Text>
+            </Pressable>
+          );
+        })}
 
-      {/* Experience Level Dropdown */}
-      <Text style={{ marginBottom: 6 }}>Experience Level</Text>
-      {EXPERIENCE_OPTIONS.map((opt) => (
+        {/* Preferred Age */}
+        <TextInput
+          placeholder="Preferred Age Min"
+          keyboardType="numeric"
+          value={ageMin}
+          onChangeText={setAgeMin}
+          style={{ borderWidth: 1, padding: 12, marginBottom: 12 }}
+        />
+
+        <TextInput
+          placeholder="Preferred Age Max"
+          keyboardType="numeric"
+          value={ageMax}
+          onChangeText={setAgeMax}
+          style={{ borderWidth: 1, padding: 12, marginBottom: 12 }}
+        />
+
+        {/* Next Button */}
         <Pressable
-          key={opt.value}
-          onPress={() => setExperienceLevel(opt.value)}
+          onPress={onNext}
+          disabled={loading}
           style={{
-            padding: 12,
+            padding: 14,
             borderWidth: 1,
-            marginBottom: 8,
-            backgroundColor:
-              experienceLevel === opt.value ? "#ddd" : "#fff",
+            alignItems: "center",
+            marginTop: 8,
           }}
         >
-          <Text>{opt.label}</Text>
+          {loading ? <ActivityIndicator /> : <Text>Next</Text>}
         </Pressable>
-      ))}
-
-      {/* Preferred Age */}
-      <TextInput
-        placeholder="Preferred Age Min"
-        keyboardType="numeric"
-        value={ageMin}
-        onChangeText={setAgeMin}
-        style={{ borderWidth: 1, padding: 12, marginBottom: 12 }}
-      />
-
-      <TextInput
-        placeholder="Preferred Age Max"
-        keyboardType="numeric"
-        value={ageMax}
-        onChangeText={setAgeMax}
-        style={{ borderWidth: 1, padding: 12, marginBottom: 12 }}
-      />
-
-      <Pressable
-        onPress={onNext}
-        disabled={loading}
-        style={{ padding: 14, borderWidth: 1, alignItems: "center" }}
-      >
-        {loading ? <ActivityIndicator /> : <Text>Next</Text>}
-      </Pressable>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
